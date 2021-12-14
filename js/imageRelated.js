@@ -67,7 +67,7 @@ function createFromMeta(meta, width){
             img.pixels[i + 1] = meta[mind].pixel[0 + 1];
             img.pixels[i + 2] = meta[mind].pixel[0 + 2];
             img.pixels[i + 3] = meta[mind].pixel[0 + 3];
-            mind ++
+            mind ++;
         }
     }
     img.updatePixels();
