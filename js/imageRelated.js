@@ -14,7 +14,7 @@ async function processImage(img, title) {
         const pixel = [img.pixels[i], img.pixels[i+1], img.pixels[i+2], img.pixels[i+3]];
         const bri = brightness([img.pixels[i], img.pixels[i+1], img.pixels[i+2], img.pixels[i+3]]);
         const name = title + "_" + padLeft((i / 4) % imgWidth, imgWidthDigitNo) + "_" + padLeft(Math.floor((i/4) / imgWidth) , imgHeightDIgitNo);
-        meta.push({pixel:pixel, brightness: bri, name:name});
+        meta.push({pixel:pixel, brightness: bri, name:name, id:i/4});
     }
     return new Promise((res, rej) => {
         res(meta);
@@ -72,4 +72,14 @@ function createFromMeta(meta, width){
     }
     img.updatePixels();
     return img;
+}
+
+function saveSingle(meta, ind) {
+    let img = createImage(1,1);
+    img.loadPixels();
+    for (let i = 0; i < img.pixels.length; i++) {
+        img.pixels[i] = meta[ind].pixel[i];
+    }
+    img.updatePixels();
+    save(img, meta[ind].name + '.png')
 }

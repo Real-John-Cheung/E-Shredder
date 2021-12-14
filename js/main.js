@@ -10,9 +10,9 @@ function preload() {
 const soundVolumeShredder = 0.5;
 const shreddingSpeed = 10;
 const sortSpeed = 5;
-let currentImage, currentWorkTitle, shredderSound, uisfx;
+let currentImage, currentWorkTitle, shredderSound, uisfx, novFont;
 let soundStartInstance, soundLoopInstance;
-let imageLoaded = false, soundLoaded = 0, metaCreated = false, count0 = 0;
+let imageLoaded = false, itemsLoaded = 0, metaCreated = false, count0 = 0;
 let shredding = false;
 let shredded = false;
 let shreddingLastV;
@@ -21,14 +21,17 @@ let currentImageSorted = [];
 let currentImageAncor = new Array(2);
 let shreddingProcess = 0;
 let sortGeneratorInstance;
+let finishedTime = 0;
+let downloadAllButton;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
     background(0);
-    soundStart = new Howl({ src: ["../media/shredderStart.mp3"], onload: () => { soundLoaded++ } });
-    soundLoop = new Howl({ src: ["../media/shredderLoop.mp3"], onload: () => { soundLoaded++ }, onfade: () => { soundLoop.stop() } });
-    soundStop = new Howl({ src: ["../media/shredderStop.mp3"], onload: () => { soundLoaded++ } });
-    uisfx = new Howl({ src: ["../media/ui.ogg"], onload: () => { soundLoaded++ } });
+    soundStart = new Howl({ src: ["../media/shredderStart.mp3"], onload: () => { itemsLoaded++ } });
+    soundLoop = new Howl({ src: ["../media/shredderLoop.mp3"], onload: () => { itemsLoaded++ }, onfade: () => { soundLoop.stop() } });
+    soundStop = new Howl({ src: ["../media/shredderStop.mp3"], onload: () => { itemsLoaded++ } });
+    uisfx = new Howl({ src: ["../media/ui.ogg"], onload: () => { itemsLoaded++ } });
+    novFont = loadFont("../media/nov.ttf", () => {itemsLoaded ++})
     //fetchNFT(currentImage, currentWorkTitle, () => {imageLoaded = true} );
     currentImage = loadImage("../cytopunk.png", () => { imageLoaded = true; processImage(currentImage, currentWorkTitle).then(m => { currentImageUnsorted = m; metaCreated = true }, e => { console.error(e); }) });
     currentWorkTitle = 'cytopunk';
@@ -42,7 +45,7 @@ function draw() {
     // textSize(20);
     // text(frameRate(), 20, 20)
     // pop();
-    if (!imageLoaded || soundLoaded < 4 || !metaCreated) {
+    if (!imageLoaded || itemsLoaded < 5 || !metaCreated) {
         // loading animation
         push();
         fill(255);
@@ -105,7 +108,8 @@ function draw() {
                     soundStop.play();
                     shredded = true;
                     shredding = false;
-                    currentImageSorted = shreddingLastV
+                    currentImageSorted = shreddingLastV;
+                    finishedTime = millis();
                 }
             } else {
                 currentImageSorted = shreddingLastV;
@@ -118,6 +122,7 @@ function draw() {
                 shredding = false;
                 currentImageSorted = shreddingLastV;
                 sortGeneratorInstance.return();
+                finishedTime = millis();
             }
             if (currentImageUnsorted.length > 0) image(crop(currentImage, shreddingProcess), currentImageAncor[0], currentImageAncor[1]);
             image(createFromMeta(currentImageSorted, currentImage.width), currentImageAncor[0], currentImageAncor[1] + (currentImage.height - shreddingProcess));
@@ -125,33 +130,50 @@ function draw() {
             if (currentImageUnsorted.length > 0) {
                 stroke(255, 0, 0);
                 line(-1, currentImageAncor[1] + (currentImage.height - shreddingProcess) - 1, width + 1, currentImageAncor[1] + (currentImage.height - shreddingProcess) - 1);
-            } else {
-                stroke(0, 255, 0);
-                //line(currentImageAncor[0] - 1 + (millis() % 2000 - 1000)/2000 * (currentImage.width + 1), -1, currentImageAncor[0] - 1 + (millis() % 2000 - 1000)/2000 * (currentImage.width + 1),height - 1);
             }
             pop();
-            //if (shreddingProcess/20 > sortSpeed) sortSpeed ++;
         } else if (shredded) {
             image(createFromMeta(currentImageSorted, currentImage.width), currentImageAncor[0], currentImageAncor[1]);
-            //show buttons and timer
+            //-----------------
+            let timeLeft = 60 - parseInt((millis() - finishedTime)/1000);
+            let timerStr = "Next scheduled job\n in " + timeLeft + " seconds";
+            push();
+            textFont(bloxFont);
+            textSize(20);
+            fill(255);
+            stroke(0);
+            textAlign(RIGHT, BOTTOM);
+            text(timerStr, width - 20, height - 20);
+            pop();
+            //---------------------------
+            if (downloadAllButton === undefined) {
+                downloadAllButton = new Button(20,height - 90, 180, 70, "Collect all shredded pieces", 20)
+            }
+            downloadAllButton.display();
+            //----------------------------
             if (mouseX < currentImageAncor[0] + currentImage.width && mouseX > currentImageAncor[0] && mouseY < currentImageAncor[1] + currentImage.height && mouseY > currentImageAncor[1]) {
                 let xPos = Math.floor(mouseX - currentImageAncor[0]);
                 let yPos = Math.floor(mouseY - currentImageAncor[1]);
                 let index = (currentImage.width - xPos) * currentImage.height + yPos
-                push();
-                strokeWeight(2);
-                stroke(144, 100);
-                fill(0, 100);
-                rect(mouseX, mouseY, 300, 150);
-                fill(currentImageSorted[index].pixel);
-                noStroke();
-                rect(mouseX + 25, mouseY + 25, 100, 100);
-                fill(255);
-                textSize(14);
-                text(currentImageSorted[index].name, mouseX + 150, mouseY + 25);
-                pop();
-                if (pmouseX !== mouseX || pmouseY !== mouseY) {
-                    uisfx.play();
+                if (currentImageSorted[index] !== undefined) {
+                    push();
+                    textFont(novFont);
+                    strokeWeight(2);
+                    stroke(144, 100);
+                    fill(0, 100);
+                    rect(width - mouseX < 350 ? mouseX - 320 : mouseX, height - mouseY < 170 ? mouseY - 150 :mouseY, 320, 150);
+                    fill(currentImageSorted[index].pixel);
+                    noStroke();
+                    rect((width - mouseX < 350 ? mouseX - 320 : mouseX) + 25, (height - mouseY < 170 ? mouseY - 150 : mouseY) + 25, 100, 100);
+                    fill(255);
+                    textSize(14);
+                    text(currentImageSorted[index].name + ".png", (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 :mouseY) + 25);
+                    text(currentImageSorted[index].id + "/" + currentImageSorted.length, (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 :mouseY) + 50);
+                    // price etc?
+                    pop();
+                    if (pmouseX !== mouseX || pmouseY !== mouseY) {
+                        uisfx.play();
+                    }
                 }
             }
         }
@@ -161,4 +183,14 @@ function draw() {
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     background(0);
+}
+
+function mouseClicked(){
+    if (false) {}
+    else if (shredded && (mouseX < currentImageAncor[0] + currentImage.width && mouseX > currentImageAncor[0] && mouseY < currentImageAncor[1] + currentImage.height && mouseY > currentImageAncor[1])) {
+        let xPos = Math.floor(mouseX - currentImageAncor[0]);
+        let yPos = Math.floor(mouseY - currentImageAncor[1]);
+        let index = (currentImage.width - xPos) * currentImage.height + yPos;
+        saveSingle(currentImageSorted, index);
+    }
 }
