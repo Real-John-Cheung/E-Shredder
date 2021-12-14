@@ -3,175 +3,95 @@
 By JohnC
 using p5js 
 */
-class BlockSort{
-    //refer to https://github.com/Faizanabid36/Block-Sort/blob/7589ab020e6e2bd1b1ec284cb5e452a0f2584c9b/BlockSort/BlockSort/Program.cs#L213
-    //refer to https://en.wikipedia.org/wiki/Block_sort#Overview 
-    constructor(array){
-        this.array = array;
-        this.arrSize = this.array.length;
-        this.finalArray = [];
-        this.sortedArray = [];
-        this.mergedArray = [];
-        this.buffer;
-        this.numBlocks;
-        this.bufferController = 0;
-        this._createBuffer();
-    }
-
-    _createBuffer(){
-        this.buffer = parseInt(Math.sqrt(this.arrSize));
-        this.numBlocks = this.arrSize / this.buffer;
-        let temp = new Array(this.buffer);
-        this.bufferController = 0;
-        this.mergedArray = new Array(this.buffer);
-        if (this.arrSize % this.buffer === 0) {
-            for (let i = 0; i < this.arrSize; i += this.buffer) {
-                for (let j = this.bufferController; j < Math.min(this.bufferController + this.buffer, this.array.length); j++) {
-                   temp[j % this.buffer] = this.array[j];
-                }
-                this.bufferController += this.buffer;
-                this._mergeExtract(temp, parseInt(this.numBlocks), parseInt(this.buffer), 0)
-            }
-            this.numBlocks = parseInt(this.numBlocks);
-        } else {
-            let remainingPart = this.arrSize % this.buffer;
-            for (let i = 0; i < this.arrSize; i += this.buffer) {
-               for (let j = this.bufferController; j < Math.min(this.bufferController + this.buffer, this.array.length); j++) {
-                   temp[j%this.buffer] = this.array[j];
-               }
-               this.bufferController += this.buffer;
-               if (i === this.numBlocks * this.buffer - remainingPart){
-                    this._mergeExtract(temp, parseInt(this.numBlocks), parseInt(remainingPart), parseInt(remainingPart));
-               } else {
-                    this._mergeExtract(temp, parseInt(this.numBlocks), parseInt(this.buffer), parseInt(remainingPart));
-               }
-            }
-            this.numBlocks = parseInt(this.numBlocks);
-        }
-    }
-
-    _mergeExtract(arr, numBlocks, buffer, remainingPart){
-        let unsorted = [];
-        let sorted = [];
-        for (let i = 0; i < buffer; i++) {
-            unsorted.push(arr[i]);
-        }
-        sorted = this._mergeSort(unsorted);
-        this._mergeBlocks(sorted, this.bufferController);
-    }
-
-    _mergeSort(unsorted){
-        if (unsorted.length <= 1){
-            return unsorted;
-        } 
-        let Left = [];
-        let Right = [];
-        let middle = parseInt(unsorted.length / 2);
-        for (let i = 0; i < middle; i++) {
-            Left.push(unsorted[i]);
-        }
-        for (let i = middle; i < unsorted.length; i++) {
-            Right.push(unsorted[i]);
-        }
-        Left = this._mergeSort(Left);
-        Right = this._mergeSort(Right);
-        return this._merge(Left, Right);
-    }
-
-    _merge(left, right){
-        let result = [];
-        while(left.length > 0 || right.length > 0){
-            if (left.length > 0 && right.length > 0) {
-                if (left[0] <= right[0]) {
-                    result.push(left[0]);
-                    left.shift();
-                } else {
-                    result.push(right[0]);
-                    right.shift();
-                }
-            } else if (left.length > 0) {
-                result.push(left[0]);
-                left.shift();
-            } else if (right.length > 0) {
-                result.push(right[0]);
-                right.shift();
-            }
-        }
-        return result;
-    }
-
-    _mergeBlocks(arr, increaseBy){
-        let remainingPart = parseInt(arr.length % this.buffer);
-        let test = increaseBy - this.buffer;
-        for (let i = 0; i < arr.length; i++) {
-            this.mergedArray[test] = arr[i % this.mergedArray.length];
-            test ++;
-        }
-        this.finalArray = this.mergedArray;
-        this.insertionSort(this.mergedArray);
-    }
-
-    insertionSort(arr){
-        let i,key,j;
-        for(i = 1; i < arr.length; i++) {
-            key = arr[i];
-            j = i - 1;
-            while(j > -1 && arr[j] > key) {
-                arr[j + 1] = arr[j];
-                j = j - 1;
-            }
-            arr[j + 1] = key;
-        }
-    }
-
-    getSorted(){
-        return this.finalArray;
-    }
+let bloxFont,soundStart,soundLoop,soundStop;
+function preload(){
+    bloxFont = loadFont("../media/Blox2.ttf");
 }
-
-const getImages = function() {
-    
-}
-
-/*
-Input: an Image
-Return: an Array of images
-*/
-const sherd = function(image){
-    const res = []
-    image.loadPixels();
-    for (let i = 0; i < image.pixels.length; i+=4) {
-      const thisSeg = createImage(1,1);
-      thisSeg.loadPixels();
-      for (let j = 0; j < 4; j++) {
-        thisSeg.pixels[j] = image.pixels[i + j]
-      }
-      thisSeg.updatePixels();
-      res.push(thisSeg);
-    }
-    return res;
-}
-
-const sort = function*(image){
-
-}
-//------------------------------------------------------------------------------------------
-let currentImage;
-
-function preload() {
-    //currentImage = getImages();
-}
+const soundVolumeShredder = 0.5;
+let shreddingSpeed = 2;
+let currentImage, currentWorkTitle, shredderSound, uisfx, loopTrigerred = false;
+let imageLoaded = false,soundLoaded = 0, metaCreated = false;
+let shredding = false;
+let shredded = false;
+let currentImageUnsorted;
+let currentImageSorted = [];
+let currentImageAncor = new Array(2);
+let shreddingProcess = 0;
+let sortGeneratorInstance;
 
 function setup(){
     createCanvas(windowWidth,windowHeight);
     background(0);
-    let sort = new BlockSort([1.3,2.3,4.3,1.1,3.2,2,4.5]);
-    console.log(sort)
-    console.log(sort.getSorted())
+    soundStart = new Howl({src:["../media/shredderStart.mp3"], onload:() => {soundLoaded ++}});
+    soundLoop = new Howl({src:["../media/shredderLoop.mp3"], onload:() => {soundLoaded ++}});
+    soundStop = new Howl({src:["../media/shredderStop.mp3"], onload:() => {soundLoaded ++}});
+    uisfx = new Howl({src:["../media/ui.ogg"], onload:() => {soundLoaded ++}});
+    //fetchNFT(currentImage, currentWorkTitle, () => {imageLoaded = true} );
+    currentImage = loadImage("../cytopunk.png", () => {imageLoaded = true; processImage(currentImage, currentWorkTitle).then(m => { currentImageUnsorted = m; console.log(currentImageUnsorted);metaCreated = true }, e => {console.error(e);})});
+    currentWorkTitle = 'cytopunk';
+    
 }
 
 function draw(){
-    //
+    if (!imageLoaded || soundLoaded < 4 || !metaCreated){
+        // loading animation
+        background(0)
+        fill(255);
+        noStroke();
+        textFont(bloxFont);
+        textSize(width/20);
+        textAlign(RIGHT, BOTTOM);
+        const leftStr = "FINDING";
+        const rightStr = "NFTs  ";
+        const totalLength = leftStr.length + rightStr.length;
+        for (let i = 0; i < leftStr.length; i++) {
+            const letter = leftStr[i];
+            text(letter, width/2 + width/10 - ((leftStr.length - i + 1) * width/20), (Math.floor(millis()/500) % totalLength === i) ? height/2 - 10 - width/40 : height/2 - 10)
+        }
+        textAlign(LEFT, TOP);
+        for (let i = leftStr.length; i < totalLength; i++) {
+            const letter = rightStr[i - leftStr.length];
+            text(letter, width/2 + ((i - leftStr.length) * width/20), (Math.floor(millis()/500) % totalLength === i) ?  height/2 + 10 - width/40 : height/2 + 10)
+        }
+    } else {
+        background(0);
+        if (!shredded && !shredding) {
+            currentImageAncor = [width/2 - currentImage.width/2, height/2 - currentImage.height/2];
+            image(currentImage, currentImageAncor[0],currentImageAncor[1]);
+            for (let i = 0; i < currentImage.width * shreddingSpeed; i++) {
+                let p = currentImageUnsorted.pop();
+                currentImageSorted.unshift(p);
+            }
+            sortGeneratorInstance = blockSort(currentImageSorted, "brightness", true);
+            shreddingProcess += shreddingSpeed;
+            shredding = true;
+        } else if (shredding) {
+            const st = sortGeneratorInstance.next()
+            if (st.done) {
+                if (shreddingProcess < currentImage.height) {
+                    for (let i = 0; i < currentImage.width * shreddingSpeed; i++) {
+                        let p = currentImageUnsorted.pop();
+                        currentImageSorted.unshift(p);
+                    }
+                    sortGeneratorInstance = blockSort(currentImageSorted, "brightness", true);
+                    shreddingProcess +=shreddingSpeed;
+                    if (shreddingProcess/10 > shreddingSpeed) shreddingSpeed ++;
+                } else {
+                    shredded = true;
+                }
+            } else {
+                currentImageSorted = st.value;
+            }
+            image(crop(currentImage, shreddingProcess), currentImageAncor[0], currentImageAncor[1]);
+            image(createFromMeta(currentImageSorted, currentImage.width), currentImageAncor[0], currentImageAncor[1] + (currentImage.height - shreddingProcess));
+            push();
+            stroke(255,0,0);
+            line(-1,currentImageAncor[1] + (currentImage.height - shreddingProcess) - 1, width+1, currentImageAncor[1] + (currentImage.height - shreddingProcess) -1);
+            pop();
+        } else if (shredded) {
+            image(createFromMeta(currentImageSorted, currentImage.width), currentImageAncor[0], currentImageAncor[1]);
+        }
+    }
 }
 
 function windowResized() {
