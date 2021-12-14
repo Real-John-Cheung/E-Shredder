@@ -9,11 +9,11 @@ function preload() {
     bloxFont = loadFont("../media/Blox2.ttf");
 }
 const soundVolumeShredder = 0.5;
-const shreddingSpeed = 10;
-const sortSpeed = 5;
-let currentImage, currentWorkTitle, currentWorkPrice,shredderSound, uisfx, novFont, openSeaLogo;
-let soundStartInstance, soundLoopInstance;
-let nftMeta = [], nftMetaCurrentIndex=0, nftMetaReady = false, nextOffset = 0;
+const shreddingSpeed = 5;
+const sortSpeed = 10;
+let currentImage, currentWorkTitle, currentWorkPrice, shredderSound, uisfx, novFont, openSeaLogo;
+let soundStartInstance, soundLoopInstance, enableSoundNoticeShown = false;
+let nftMeta = [], nftMetaCurrentIndex = 0, nftMetaReady = false, nextOffset = 0;
 let imageLoaded = false, itemsLoaded = 0, metaCreated = false, count0 = 0;
 let shredding = false;
 let shredded = false;
@@ -33,22 +33,13 @@ function setup() {
     soundLoop = new Howl({ src: ["../media/shredderLoop.mp3"], onload: () => { itemsLoaded++ }, onfade: () => { soundLoop.stop() } });
     soundStop = new Howl({ src: ["../media/shredderStop.mp3"], onload: () => { itemsLoaded++ } });
     uisfx = new Howl({ src: ["../media/ui.ogg"], onload: () => { itemsLoaded++ } });
-    novFont = loadFont("../media/nov.ttf", () => {itemsLoaded ++})
-    openSeaLogo = loadImage("../media/openSea.png", () => {itemsLoaded ++});
-    //fetchNFT(currentImage, currentWorkTitle, () => {imageLoaded = true} );
+    novFont = loadFont("../media/nov.ttf", () => { itemsLoaded++ })
+    openSeaLogo = loadImage("../media/openSea.png", () => { itemsLoaded++ });
     fetchNFTmeta(nextOffset);
-    // currentImage = loadImage("../cytopunk.png", () => {});
-    // currentWorkTitle = 'cytopunk';
-
 }
 
 function draw() {
     background(0);
-    // push();
-    // fill(255);
-    // textSize(20);
-    // text(frameRate(), 20, 20)
-    // pop();
     if (!imageLoaded || itemsLoaded < 6 || !metaCreated) {
         // loading animation
         push();
@@ -69,8 +60,15 @@ function draw() {
             const letter = rightStr[i - leftStr.length];
             text(letter, width / 2 + ((i - leftStr.length) * width / 20), (Math.floor(millis() / 500) % totalLength === i) ? height / 2 + 10 - width / 40 : height / 2 + 10)
         }
+        if (!enableSoundNoticeShown) {
+            textAlign(CENTER, BOTTOM);
+            textSize(16)
+            fill(255, 255 * Math.abs(1000 - millis() % 2000) / 2000);
+            text("Click To Enable Sound", width / 2, height - 40);
+        }
         pop();
     } else {
+        if (!enableSoundNoticeShown) enableSoundNoticeShown = true;
         if (!shredded && !shredding) {
             currentImageAncor = [width / 2 - currentImage.width / 2, height / 2 - currentImage.height / 2];
             image(currentImage, currentImageAncor[0], currentImageAncor[1]);
@@ -81,6 +79,16 @@ function draw() {
             soundStartInstance = soundStart.play();
             shredding = true;
         } else if (shredding) {
+            //--------------
+            push();
+            textFont(bloxFont);
+            textSize(width / 40);
+            fill(255);
+            stroke(0);
+            textAlign(CENTER, TOP);
+            text(currentWorkTitle, width / 2, 40)
+            pop();
+            //-------------
             if (soundStart.playing(soundStartInstance) && soundStart.duration() - soundStart.seek(soundStartInstance) < 0.4 && !soundLoop.playing()) {
                 soundLoop.volume(soundVolumeShredder);
                 soundLoopInstance = soundLoop.play();
@@ -137,9 +145,19 @@ function draw() {
             }
             pop();
         } else if (shredded) {
+            //--------------
+            push();
+            textFont(bloxFont);
+            textSize(width / 40);
+            fill(255);
+            stroke(0);
+            textAlign(CENTER, TOP);
+            text(currentWorkTitle, width / 2, 40)
+            pop();
+            //-------------
             image(createFromMeta(currentImageSorted, currentImage.width), currentImageAncor[0], currentImageAncor[1]);
             //-----------------
-            let timeLeft = 60 - parseInt((millis() - finishedTime)/1000);
+            let timeLeft = 60 - parseInt((millis() - finishedTime) / 1000);
             if (timeLeft <= 0) {
                 nextNFT();
                 return
@@ -151,16 +169,16 @@ function draw() {
             fill(255);
             stroke(0);
             textAlign(RIGHT, BOTTOM);
-            text(timerStr, width - 20, height - 20);
+            text(timerStr, width - 30, height - 30);
             textAlign(RIGHT, TOP);
-            textSize(16);
-            text("NFT Data From", width - 20, 20)
+            textSize(18);
+            text("NFT Data From", width - 30, 20)
             imageMode(CENTER)
-            image(openSeaLogo, width - 60, 60, 80, 20)
+            image(openSeaLogo, width - 80, 60, 100, 25)
             pop();
             //---------------------------
             if (downloadAllButton === undefined) {
-                downloadAllButton = new Button(20,height - 90, 180, 70, "Collect all shredded pieces", 20)
+                downloadAllButton = new Button(30, height - 100, 180, 70, "Collect all shredded pieces", 20)
             }
             downloadAllButton.display();
             //----------------------------
@@ -172,17 +190,17 @@ function draw() {
                     push();
                     textFont(novFont);
                     strokeWeight(2);
-                    stroke(144, 150);
+                    stroke(255, 150);
                     fill(0, 150);
-                    rect(width - mouseX < 350 ? mouseX - 320 : mouseX, height - mouseY < 170 ? mouseY - 150 :mouseY, 320, 150);
+                    rect(width - mouseX < 350 ? mouseX - 320 : mouseX, height - mouseY < 170 ? mouseY - 150 : mouseY, 320, 150);
                     fill(currentImageSorted[index].pixel);
-                    noStroke();
+                    stroke(144,150);
                     rect((width - mouseX < 350 ? mouseX - 320 : mouseX) + 25, (height - mouseY < 170 ? mouseY - 150 : mouseY) + 25, 100, 100);
                     fill(255);
                     textSize(14);
-                    text(currentImageSorted[index].name + ".png", (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 :mouseY) + 25);
-                    text(currentImageSorted[index].id + "/" + currentImageSorted.length, (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 :mouseY) + 50);
-                    text("~ " + (currentWorkPrice/currentImageSorted.length).toFixed(10) + " ETH", (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 :mouseY) + 75);
+                    text(currentImageSorted[index].name + ".png", (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 : mouseY) + 25, 150, 100);
+                    text(currentImageSorted[index].id + "/" + currentImageSorted.length, (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 : mouseY) + 115);
+                    text("~ " + (currentWorkPrice / currentImageSorted.length).toFixed(10) + " ETH", (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 : mouseY) + 135);
                     pop();
                     if (pmouseX !== mouseX || pmouseY !== mouseY) {
                         uisfx.play();
@@ -198,7 +216,7 @@ function windowResized() {
     background(0);
 }
 
-function mouseClicked(){
+function mouseClicked() {
     if (downloadAllButton && downloadAllButton.cursorisIn()) {
         if (confirm("You are downloding " + currentImageSorted.length + " image files.\n That might take a lot of time to prepare.\n Click 'OK' if you want to continue.")) {
             downloadAll(currentImageSorted);
