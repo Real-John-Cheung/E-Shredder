@@ -1,7 +1,8 @@
 /*
 2021
 By JohnC
-using p5js 
+using p5js howler.js jszip and FileSaver
+using OpenSea's API
 */
 let bloxFont, soundStart, soundLoop, soundStop;
 function preload() {
@@ -10,8 +11,9 @@ function preload() {
 const soundVolumeShredder = 0.5;
 const shreddingSpeed = 10;
 const sortSpeed = 5;
-let currentImage, currentWorkTitle, shredderSound, uisfx, novFont;
+let currentImage, currentWorkTitle, currentWorkPrice,shredderSound, uisfx, novFont, openSeaLogo;
 let soundStartInstance, soundLoopInstance;
+let nftMeta = [], nftMetaCurrentIndex=0, nftMetaReady = false, nextOffset = 0;
 let imageLoaded = false, itemsLoaded = 0, metaCreated = false, count0 = 0;
 let shredding = false;
 let shredded = false;
@@ -32,9 +34,11 @@ function setup() {
     soundStop = new Howl({ src: ["../media/shredderStop.mp3"], onload: () => { itemsLoaded++ } });
     uisfx = new Howl({ src: ["../media/ui.ogg"], onload: () => { itemsLoaded++ } });
     novFont = loadFont("../media/nov.ttf", () => {itemsLoaded ++})
+    openSeaLogo = loadImage("../media/openSea.png", () => {itemsLoaded ++});
     //fetchNFT(currentImage, currentWorkTitle, () => {imageLoaded = true} );
-    currentImage = loadImage("../cytopunk.png", () => { imageLoaded = true; processImage(currentImage, currentWorkTitle).then(m => { currentImageUnsorted = m; metaCreated = true }, e => { console.error(e); }) });
-    currentWorkTitle = 'cytopunk';
+    fetchNFTmeta(nextOffset);
+    // currentImage = loadImage("../cytopunk.png", () => {});
+    // currentWorkTitle = 'cytopunk';
 
 }
 
@@ -45,7 +49,7 @@ function draw() {
     // textSize(20);
     // text(frameRate(), 20, 20)
     // pop();
-    if (!imageLoaded || itemsLoaded < 5 || !metaCreated) {
+    if (!imageLoaded || itemsLoaded < 6 || !metaCreated) {
         // loading animation
         push();
         fill(255);
@@ -136,6 +140,10 @@ function draw() {
             image(createFromMeta(currentImageSorted, currentImage.width), currentImageAncor[0], currentImageAncor[1]);
             //-----------------
             let timeLeft = 60 - parseInt((millis() - finishedTime)/1000);
+            if (timeLeft <= 0) {
+                nextNFT();
+                return
+            }
             let timerStr = "Next scheduled job\n in " + timeLeft + " seconds";
             push();
             textFont(bloxFont);
@@ -144,6 +152,11 @@ function draw() {
             stroke(0);
             textAlign(RIGHT, BOTTOM);
             text(timerStr, width - 20, height - 20);
+            textAlign(RIGHT, TOP);
+            textSize(16);
+            text("NFT Data From", width - 20, 20)
+            imageMode(CENTER)
+            image(openSeaLogo, width - 60, 60, 80, 20)
             pop();
             //---------------------------
             if (downloadAllButton === undefined) {
@@ -159,8 +172,8 @@ function draw() {
                     push();
                     textFont(novFont);
                     strokeWeight(2);
-                    stroke(144, 100);
-                    fill(0, 100);
+                    stroke(144, 150);
+                    fill(0, 150);
                     rect(width - mouseX < 350 ? mouseX - 320 : mouseX, height - mouseY < 170 ? mouseY - 150 :mouseY, 320, 150);
                     fill(currentImageSorted[index].pixel);
                     noStroke();
@@ -169,7 +182,7 @@ function draw() {
                     textSize(14);
                     text(currentImageSorted[index].name + ".png", (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 :mouseY) + 25);
                     text(currentImageSorted[index].id + "/" + currentImageSorted.length, (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 :mouseY) + 50);
-                    // price etc?
+                    text("~ " + (currentWorkPrice/currentImageSorted.length).toFixed(10) + " ETH", (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 :mouseY) + 75);
                     pop();
                     if (pmouseX !== mouseX || pmouseY !== mouseY) {
                         uisfx.play();
@@ -186,7 +199,11 @@ function windowResized() {
 }
 
 function mouseClicked(){
-    if (false) {}
+    if (downloadAllButton && downloadAllButton.cursorisIn()) {
+        if (confirm("You are downloding " + currentImageSorted.length + " image files.\n That might take a lot of time to prepare.\n Click 'OK' if you want to continue.")) {
+            downloadAll(currentImageSorted);
+        }
+    }
     else if (shredded && (mouseX < currentImageAncor[0] + currentImage.width && mouseX > currentImageAncor[0] && mouseY < currentImageAncor[1] + currentImage.height && mouseY > currentImageAncor[1])) {
         let xPos = Math.floor(mouseX - currentImageAncor[0]);
         let yPos = Math.floor(mouseY - currentImageAncor[1]);
