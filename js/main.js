@@ -58,7 +58,7 @@ function draw() {
         textAlign(CENTER, BOTTOM);
         textSize(16)
         fill(255, 255 * Math.abs(1000 - millis() % 2000) / 2000);
-        text("Click To Enable Sound And Start", width / 2, height - 40);
+        text("Click To Enable Sound And/Or Start", width / 2, height - 40);
         pop();
     }
     if (!imageLoaded || itemsLoaded < 6 || !metaCreated || !authorIconloaded || canAutoPlay === undefined || (!firstClick && canAutoPlay === false)) {
