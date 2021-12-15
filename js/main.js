@@ -13,10 +13,10 @@ function preload() {
 const soundVolumeShredder = 0.5;
 const shreddingSpeed = 5;
 const sortSpeed = 10;
-let currentImage, currentWorkTitle, currentWorkPrice, shredderSound, uisfx, novFont, openSeaLogo;
+let currentImage, currentWorkTitle, currentWorkPrice, currentWorkTopBid, currentWorkAuthor, shredderSound, uisfx, novFont, openSeaLogo;
 let soundStartInstance, soundLoopInstance;
 let nftMeta = [], nftMetaCurrentIndex = 0, nftMetaReady = false, nextOffset = 0;
-let imageLoaded = false, itemsLoaded = 0, metaCreated = false, count0 = 0;
+let imageLoaded = false, authorIconloaded = false, itemsLoaded = 0, metaCreated = false, count0 = 0;
 let shredding = false;
 let shredded = false;
 let shreddingLastV;
@@ -42,13 +42,14 @@ function setup() {
 
 function draw() {
     background(0);
+    //console.log(audioC.state);
     if (audioC.state !== 'running') {
         textAlign(CENTER, BOTTOM);
         textSize(16)
         fill(255, 255 * Math.abs(1000 - millis() % 2000) / 2000);
         text("Click To Enable Sound", width / 2, height - 40);
     }
-    if (!imageLoaded || itemsLoaded < 6 || !metaCreated) {
+    if (!imageLoaded || itemsLoaded < 6 || !metaCreated || !authorIconloaded) {
         // loading animation
         push();
         fill(255);
@@ -81,14 +82,7 @@ function draw() {
             shredding = true;
         } else if (shredding) {
             //--------------
-            push();
-            textFont(bloxFont);
-            textSize(width / 40);
-            fill(255);
-            stroke(0);
-            textAlign(CENTER, TOP);
-            text(currentWorkTitle, width / 2, 40)
-            pop();
+            showingTitleAndAuthor();
             //-------------
             if (soundStart.playing(soundStartInstance) && soundStart.duration() - soundStart.seek(soundStartInstance) < 0.4 && !soundLoop.playing()) {
                 soundLoop.volume(soundVolumeShredder);
@@ -147,14 +141,7 @@ function draw() {
             pop();
         } else if (shredded) {
             //--------------
-            push();
-            textFont(bloxFont);
-            textSize(width / 40);
-            fill(255);
-            stroke(0);
-            textAlign(CENTER, TOP);
-            text(currentWorkTitle, width / 2, 40)
-            pop();
+            showingTitleAndAuthor();
             //-------------
             image(createFromMeta(currentImageSorted, currentImage.width), currentImageAncor[0], currentImageAncor[1]);
             //-----------------
@@ -195,11 +182,13 @@ function draw() {
                     fill(0, 150);
                     rect(width - mouseX < 350 ? mouseX - 320 : mouseX, height - mouseY < 170 ? mouseY - 150 : mouseY, 320, 150);
                     fill(currentImageSorted[index].pixel);
-                    stroke(144,150);
+                    stroke(144, 150);
                     rect((width - mouseX < 350 ? mouseX - 320 : mouseX) + 25, (height - mouseY < 170 ? mouseY - 150 : mouseY) + 25, 100, 100);
                     fill(255);
                     textSize(14);
+                    textWrap(CHAR);
                     text(currentImageSorted[index].name + ".png", (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 : mouseY) + 25, 150, 100);
+                    textWrap(WORD);
                     text(currentImageSorted[index].id + "/" + currentImageSorted.length, (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 : mouseY) + 115);
                     text("~ " + (currentWorkPrice / currentImageSorted.length).toFixed(10) + " ETH", (width - mouseX < 350 ? mouseX - 320 : mouseX) + 150, (height - mouseY < 170 ? mouseY - 150 : mouseY) + 135);
                     pop();
@@ -229,4 +218,40 @@ function mouseClicked() {
         let index = (currentImage.width - xPos) * currentImage.height + yPos;
         saveSingle(currentImageSorted, index);
     }
+}
+
+function showingTitleAndAuthor() {
+    push();
+    textFont(bloxFont);
+    textSize(width / 40);
+    fill(255);
+    stroke(0);
+    textAlign(CENTER, TOP);
+    text(currentWorkTitle, width / 2, 40)
+    textSize(width/50);
+    if (currentWorkAuthor){
+        let str = '';
+        if ((currentWorkAuthor.name && currentWorkAuthor.name.length > 0)|| currentWorkAuthor.icon !== undefined) {
+            str += "Minted By "
+            if (!currentWorkAuthor.name || currentWorkAuthor.name.length <=0 ){
+                textAlign(RIGHT, BOTTOM);
+                text(str, width/2, height - 40);
+                image(currentWorkAuthor.icon, width/2, height - 40 - 40, 40, 40);
+            } else if (currentWorkAuthor.icon === undefined){
+                str += currentWorkAuthor.name;
+                textAlign(CENTER, BOTTOM);
+                text(str, width/2, height - 40);
+            } else if ((currentWorkAuthor.name && currentWorkAuthor.name.length > 0) && currentWorkAuthor.icon !== undefined) {
+                let n = Math.ceil(40/textWidth(" ")) + 1;
+                for (let i = 0; i < n; i++) {
+                    str+= " ";
+                } 
+                str += currentWorkAuthor.name;
+                textAlign(CENTER, BOTTOM);
+                text(str, width/2, height - 40);
+                image(currentWorkAuthor.icon, width/2 - (textWidth(str)/2 - textWidth("Minted By ")), height - 40 - 40, 40, 40);
+            }
+        }
+    }
+    pop();
 }

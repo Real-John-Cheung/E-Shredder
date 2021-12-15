@@ -13,12 +13,23 @@ async function fetchNFTmeta(offset) {
             m.price = parseInt(a.last_sale.total_price)/1e18; //WEI to ETH
             if (m.imageUrl === null || m.imageUrl.length === 0) continue;
             if (m.name === null) m.name = "";
+            m.author;
+            m.topBid;
+            if (a.creator && a.creator.user) m.author = {name:a.creator.user.username, iconURL:a.creator.profile_img_url}
+            if (a.topBid) m.topBid = a.topBid;
             nftMeta.push(m);
         }
         nextOffset += 55;
         nftMetaReady = true;
         currentWorkTitle = nftMeta[nftMetaCurrentIndex].name;
         currentWorkPrice = nftMeta[nftMetaCurrentIndex].price;
+        currentWorkTopBid = nftMeta[nftMetaCurrentIndex].topBid;
+        currentWorkAuthor = nftMeta[nftMetaCurrentIndex].author;
+        if (currentWorkAuthor && currentWorkAuthor.iconURL && currentWorkAuthor.iconURL.length > 0) {
+            currentWorkAuthor.icon = loadImage(currentWorkAuthor.iconURL, () => {authorIconloaded = true})
+        } else {
+            authorIconloaded = true;
+        }
         currentImage = loadImage(nftMeta[nftMetaCurrentIndex].imageUrl, () => { imageLoaded = true; processImage(currentImage, currentWorkTitle).then(m => { currentImageUnsorted = m; metaCreated = true }, e => { console.error(e); }) });
     })
     .catch(err => console.error(err));
@@ -28,6 +39,7 @@ function nextNFT(){
     currentImage = undefined;
     currentWorkTitle = undefined;
     imageLoaded = false;
+    authorIconloaded = false;
     metaCreated = false;
     count0 = 0;
     shredding = false;
@@ -45,6 +57,13 @@ function nextNFT(){
         nftMetaCurrentIndex ++;
         currentWorkTitle = nftMeta[nftMetaCurrentIndex].name;
         currentWorkPrice = nftMeta[nftMetaCurrentIndex].price;
+        currentWorkTopBid = nftMeta[nftMetaCurrentIndex].topBid;
+        currentWorkAuthor = nftMeta[nftMetaCurrentIndex].author;
+        if (currentWorkAuthor && currentWorkAuthor.iconURL && currentWorkAuthor.iconURL.length > 0) {
+            currentWorkAuthor.icon = loadImage(currentWorkAuthor.iconURL, () => {authorIconloaded = true})
+        } else {
+            authorIconloaded = true;
+        }
         currentImage = loadImage(nftMeta[nftMetaCurrentIndex].imageUrl, () => { imageLoaded = true; processImage(currentImage, currentWorkTitle).then(m => { currentImageUnsorted = m; metaCreated = true }, e => { console.error(e); }) });
     } else {
         nftMeta = [], nftMetaCurrentIndex=0, nftMetaReady = false;
