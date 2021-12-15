@@ -1,14 +1,20 @@
 /*
 2021
 By JohnC
-using p5js howler.js jszip and FileSaver
+using p5js howler.js jszip can-autoplay and FileSaver
 using OpenSea's API
 */
-let bloxFont, soundStart, soundLoop, soundStop;
-let audioC;
+let bloxFont, soundStart, soundLoop, soundStop, canAutoPlay;
 function preload() {
     bloxFont = loadFont("./media/Blox2.ttf");
-    audioC = new AudioContext();
+    canAutoplay.video().then(({result}) => {
+        if (result === true) {
+          canAutoPlay = true;
+        } else {
+          canAutoPlay = false;
+        }
+        console.log(canAutoPlay);
+      })
 }
 const soundVolumeShredder = 0.5;
 const shreddingSpeed = 5;
@@ -27,6 +33,7 @@ let shreddingProcess = 0;
 let sortGeneratorInstance;
 let finishedTime = 0;
 let downloadAllButton;
+let firstClick = false;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
@@ -43,13 +50,18 @@ function setup() {
 function draw() {
     background(0);
     //console.log(audioC.state);
-    if (audioC.state !== 'running') {
+    if (!firstClick && canAutoPlay === false) {
+        push();
+        fill(255);
+        noStroke();
+        textFont(bloxFont);
         textAlign(CENTER, BOTTOM);
         textSize(16)
         fill(255, 255 * Math.abs(1000 - millis() % 2000) / 2000);
-        text("Click To Enable Sound", width / 2, height - 40);
+        text("Click To Enable Sound And Start", width / 2, height - 40);
+        pop();
     }
-    if (!imageLoaded || itemsLoaded < 6 || !metaCreated || !authorIconloaded) {
+    if (!imageLoaded || itemsLoaded < 6 || !metaCreated || !authorIconloaded || canAutoPlay === undefined || (!firstClick && canAutoPlay === false)) {
         // loading animation
         push();
         fill(255);
@@ -207,6 +219,7 @@ function windowResized() {
 }
 
 function mouseClicked() {
+    if (!firstClick) firstClick = true;
     if (downloadAllButton && downloadAllButton.cursorisIn()) {
         if (confirm("You are downloding " + currentImageSorted.length + " image files.\n That might take a lot of time to prepare.\n Click 'OK' if you want to continue.")) {
             downloadAll(currentImageSorted);

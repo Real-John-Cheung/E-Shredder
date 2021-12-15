@@ -38,6 +38,9 @@ async function fetchNFTmeta(offset) {
 function nextNFT(){
     currentImage = undefined;
     currentWorkTitle = undefined;
+    currentWorkAuthor = undefined;
+    currentWorkPrice = undefined;
+    currentWorkTopBid = undefined;
     imageLoaded = false;
     authorIconloaded = false;
     metaCreated = false;
