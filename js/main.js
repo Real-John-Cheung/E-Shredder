@@ -5,14 +5,16 @@ using p5js howler.js jszip and FileSaver
 using OpenSea's API
 */
 let bloxFont, soundStart, soundLoop, soundStop;
+let audioC;
 function preload() {
     bloxFont = loadFont("./media/Blox2.ttf");
+    audioC = new AudioContext();
 }
 const soundVolumeShredder = 0.5;
 const shreddingSpeed = 5;
 const sortSpeed = 10;
 let currentImage, currentWorkTitle, currentWorkPrice, shredderSound, uisfx, novFont, openSeaLogo;
-let soundStartInstance, soundLoopInstance, enableSoundNoticeShown = false;
+let soundStartInstance, soundLoopInstance;
 let nftMeta = [], nftMetaCurrentIndex = 0, nftMetaReady = false, nextOffset = 0;
 let imageLoaded = false, itemsLoaded = 0, metaCreated = false, count0 = 0;
 let shredding = false;
@@ -40,6 +42,12 @@ function setup() {
 
 function draw() {
     background(0);
+    if (audioC.state !== 'running') {
+        textAlign(CENTER, BOTTOM);
+        textSize(16)
+        fill(255, 255 * Math.abs(1000 - millis() % 2000) / 2000);
+        text("Click To Enable Sound", width / 2, height - 40);
+    }
     if (!imageLoaded || itemsLoaded < 6 || !metaCreated) {
         // loading animation
         push();
@@ -60,15 +68,8 @@ function draw() {
             const letter = rightStr[i - leftStr.length];
             text(letter, width / 2 + ((i - leftStr.length) * width / 20), (Math.floor(millis() / 500) % totalLength === i) ? height / 2 + 10 - width / 40 : height / 2 + 10)
         }
-        if (!enableSoundNoticeShown) {
-            textAlign(CENTER, BOTTOM);
-            textSize(16)
-            fill(255, 255 * Math.abs(1000 - millis() % 2000) / 2000);
-            text("Click To Enable Sound", width / 2, height - 40);
-        }
         pop();
     } else {
-        if (!enableSoundNoticeShown) enableSoundNoticeShown = true;
         if (!shredded && !shredding) {
             currentImageAncor = [width / 2 - currentImage.width / 2, height / 2 - currentImage.height / 2];
             image(currentImage, currentImageAncor[0], currentImageAncor[1]);
@@ -213,7 +214,7 @@ function draw() {
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
-    background(0);
+    if (currentImage) currentImageAncor = [width / 2 - currentImage.width / 2, height / 2 - currentImage.height / 2];
 }
 
 function mouseClicked() {
