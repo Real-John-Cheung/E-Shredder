@@ -41,7 +41,7 @@ function setup() {
     soundStart = new Howl({ src: ["./media/shredderStart.mp3"], onload: () => { itemsLoaded++ } });
     soundLoop = new Howl({ src: ["./media/shredderLoop.mp3"], onload: () => { itemsLoaded++ }, onfade: () => { soundLoop.stop() } });
     soundStop = new Howl({ src: ["./media/shredderStop.mp3"], onload: () => { itemsLoaded++ } });
-    uisfx = new Howl({ src: ["./media/ui.ogg"], onload: () => { itemsLoaded++ } });
+    uisfx = new Howl({ src: ["./media/ui.ogg", "./media/ui.mp3"], onload: () => { itemsLoaded++ } });
     novFont = loadFont("./media/nov.ttf", () => { itemsLoaded++ })
     openSeaLogo = loadImage("./media/openSea.png", () => { itemsLoaded++ });
     fetchNFTmeta(nextOffset);
