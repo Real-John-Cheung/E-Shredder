@@ -1,3 +1,14 @@
+const serverUrl = 'https://5lktfnykhfdx.usemoralis.com:2053/server'
+const appId = 'u0slnul1oNI8S1ssRcVvdWGKSIFZUeZDCXPJe4ps
+Moralis.start({ serverUrl, appId });
+
+async function fetchNFTmeta_new(offset) {
+    let opts = { q: "", filter: "global", offset: offset, limit: 50 };
+    let nfts = await Moralis.Web3API.token.searchNFTs(options);
+    console.log(nfts);
+}
+
+/* old code using opensea API */
 async function fetchNFTmeta(offset) {
     const options = {method: 'GET'};
 

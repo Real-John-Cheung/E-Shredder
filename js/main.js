@@ -45,6 +45,7 @@ function setup() {
     novFont = loadFont("./media/nov.ttf", () => { itemsLoaded++ })
     openSeaLogo = loadImage("./media/openSea.png", () => { itemsLoaded++ });
     fetchNFTmeta(nextOffset);
+    fetchNFTmeta_new(nextOffset);
 }
 
 function draw() {
