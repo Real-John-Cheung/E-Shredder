@@ -58,7 +58,7 @@ function draw() {
         textAlign(CENTER, BOTTOM);
         textSize(16)
         fill(255, 255 * Math.abs(1000 - millis() % 2000) / 2000);
-        text("Click To Enable Sound And/Or Start", width / 2, height - 40);
+        //text("Click To Enable Sound And/Or Start", width / 2, height - 40);
         pop();
     }
     if (!imageLoaded || itemsLoaded < 6 || !metaCreated || !authorIconloaded || canAutoPlay === undefined || (!firstClick && canAutoPlay === false)) {
@@ -69,8 +69,8 @@ function draw() {
         textFont(bloxFont);
         textSize(width / 20);
         textAlign(RIGHT, BOTTOM);
-        const leftStr = "FINDING";
-        const rightStr = "NFTs  ";
+        const leftStr = "SITE";
+        const rightStr = "IS DOWN  ";
         const totalLength = leftStr.length + rightStr.length;
         for (let i = 0; i < leftStr.length; i++) {
             const letter = leftStr[i];
@@ -81,6 +81,10 @@ function draw() {
             const letter = rightStr[i - leftStr.length];
             text(letter, width / 2 + ((i - leftStr.length) * width / 20), (Math.floor(millis() / 500) % totalLength === i) ? height / 2 + 10 - width / 40 : height / 2 + 10)
         }
+        textFont(bloxFont);
+        textAlign(CENTER, BOTTOM);
+        textSize(16)
+        text("This site is current not working due to the recent changes of the opensea api.", width / 2, height - 40);
         pop();
     } else {
         if (!shredded && !shredding) {
