@@ -1,7 +1,7 @@
 async function fetchNFTmeta(offset) {
     const options = {method: 'GET'};
 
-    fetch('https://api.opensea.io/api/v1/assets?order_by=sale_date&order_direction=desc&offset='+offset+'&limit=50', options)
+    fetch('https://api.opensea.io/assets?order_by=sale_date&order_direction=desc&offset='+offset+'&limit=50', options)
     .then(response => response.json())
     .then(response => {
         for (let index = 0; index < response.assets.length; index++) {
